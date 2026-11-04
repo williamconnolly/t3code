@@ -209,6 +209,7 @@ export function buildSidebarProjectSnapshots(input: {
 export function buildSidebarProjectPickerEntries(input: {
   groups: ReadonlyArray<SidebarProjectSnapshot>;
   preferredProjectRef: ScopedProjectRef | null;
+  order?: "sidebar" | "name";
 }) {
   const preferredProjectRef = input.preferredProjectRef;
   const entries = input.groups.flatMap((group): SidebarProjectPickerEntry[] => {
@@ -239,6 +240,15 @@ export function buildSidebarProjectPickerEntries(input: {
 
     return [{ group, targetProject, isPreferred }];
   });
+  if (input.order === "name") {
+    return entries.toSorted(
+      (left, right) =>
+        left.group.displayName.localeCompare(right.group.displayName, undefined, {
+          sensitivity: "base",
+          numeric: true,
+        }) || left.group.projectKey.localeCompare(right.group.projectKey),
+    );
+  }
   // The preferred project leads the unpinned ones; pinned projects stay first.
   const preferred = entries.find((entry) => entry.isPreferred);
   if (!preferred || preferred.group.pinned) return entries;
