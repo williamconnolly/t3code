@@ -368,6 +368,7 @@ export function buildKeybindingCommandOptions(
 }
 
 export function commandLabel(command: KeybindingCommand): string {
+  if (command === "composer.toggleModel") return "Composer: Toggle Sol / Opus";
   if (command === "thread.scrollToEnd") return "Thread: Scroll to End";
   if (command === "thread.markUnread") return "Thread: Mark Unread";
   if (command === "thread.rename") return "Thread: Rename";
