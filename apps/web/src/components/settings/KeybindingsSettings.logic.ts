@@ -368,6 +368,11 @@ export function buildKeybindingCommandOptions(
 }
 
 export function commandLabel(command: KeybindingCommand): string {
+  if (command === "composer.toggleModel") return "Composer: Toggle Sol / Opus";
+  if (command === "thread.scrollToEnd") return "Thread: Scroll to End";
+  if (command === "thread.markUnread") return "Thread: Mark Unread";
+  if (command === "thread.rename") return "Thread: Rename";
+  if (command === "thread.regenerateTitle") return "Thread: Regenerate Name";
   if (command === "workspace.focusNext") return "Focus Next Workspace Area";
   if (command === "workspace.focusPrevious") return "Focus Previous Workspace Area";
   if (command === "composer.sendAlternate") return "Composer: Opposite Queue or Steer Action";

@@ -278,6 +278,7 @@ import {
 } from "./preparingComposerImages";
 import { ComposerControlsBar } from "./ComposerControlsBar";
 import { composerCommandKeyHandler } from "./composerCommandKey";
+import { resolveComposerModelToggle } from "./composerModelToggle";
 
 function consumePasteAsTextShortcut(deadline: { current: number }): boolean {
   const armed = Date.now() <= deadline.current;
@@ -303,6 +304,7 @@ export interface ChatComposerHandle {
   openModelPicker: () => void;
   stepReasoningEffort: (direction: 1 | -1) => void;
   toggleModelPicker: () => void;
+  toggleModel: () => void;
   openControl: (command: KeybindingCommand) => void;
   isModelPickerOpen: () => boolean;
   isCaretAtStart: () => boolean;
@@ -2863,6 +2865,27 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           { ensureLeadingBoundary: true, citationCommentAnchor: sourceAnchor },
         ),
       openModelPicker: openModelPickerStable,
+      toggleModel: () => {
+        if (!canOperateThread || pendingUserInputs.length > 0 || isEditingQueuedMessage) return;
+        const selection = resolveComposerModelToggle({
+          provider: selectedProvider,
+          instanceId: selectedInstanceId,
+          model: selectedModel,
+          entries: providerInstanceEntries,
+          getModelDisabledReason,
+        });
+        if (!selection) {
+          toastManager.add({
+            type: "warning",
+            title: "Model switch unavailable",
+            description: "The other model is unavailable in this environment or thread.",
+          });
+          return;
+        }
+        setMultipleModelSelections(null);
+        onProviderModelSelect(selection.instanceId, selection.model);
+        setIsComposerModelPickerOpen(false);
+      },
       stepReasoningEffort: (direction) => {
         if (noProviderAvailable || pendingUserInputs.length > 0 || isEditingQueuedMessage) {
           return;
@@ -3031,6 +3054,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     }),
     [
       activeThread,
+      canOperateThread,
+      providerInstanceEntries,
+      getModelDisabledReason,
+      onProviderModelSelect,
       addComposerAttachments,
       addComposerFoldersStable,
       foldPastedText,

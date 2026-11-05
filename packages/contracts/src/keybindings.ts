@@ -36,6 +36,10 @@ export type ModelPickerJumpKeybindingCommand =
 
 const THREAD_KEYBINDING_COMMANDS = [
   "thread.stop",
+  "thread.scrollToEnd",
+  "thread.rename",
+  "thread.regenerateTitle",
+  "thread.markUnread",
   "thread.steerQueuedMessage",
   "thread.editQueuedMessage",
   "thread.previous",
@@ -92,6 +96,7 @@ export const STATIC_KEYBINDING_COMMANDS = [
   "composer.sendAndNewThread",
   "composer.host",
   "composer.cycleHost",
+  "composer.toggleModel",
   "composer.effort",
   "composer.increaseEffort",
   "composer.decreaseEffort",

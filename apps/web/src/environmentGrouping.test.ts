@@ -300,5 +300,22 @@ describe("environment grouping", () => {
       preferredProjectRef: { environmentId: current.environmentId, projectId: current.id },
     });
     expect(entries.map((entry) => entry.group.displayName)).toEqual(["pinned", "current", "other"]);
+
+    for (const orderedGroups of [groups, groups.toReversed()]) {
+      for (const preferred of [current, null]) {
+        const alphabetical = buildSidebarProjectPickerEntries({
+          groups: orderedGroups,
+          preferredProjectRef: preferred
+            ? { environmentId: preferred.environmentId, projectId: preferred.id }
+            : null,
+          order: "name",
+        });
+        expect(alphabetical.map((entry) => entry.group.displayName)).toEqual([
+          "current",
+          "other",
+          "pinned",
+        ]);
+      }
+    }
   });
 });

@@ -36,6 +36,25 @@ function event(overrides: Partial<ShortcutEventLike> = {}): ShortcutEventLike {
   };
 }
 
+it("binds Command+Control+M to the model toggle outside the terminal", () => {
+  const input = event({ key: "m", metaKey: true, ctrlKey: true });
+  assert.equal(
+    resolveShortcutCommand(input, DEFAULT_RESOLVED_KEYBINDINGS, { platform: "MacIntel" }),
+    "composer.toggleModel",
+  );
+  assert.isNull(
+    resolveShortcutCommand(input, DEFAULT_RESOLVED_KEYBINDINGS, {
+      platform: "MacIntel",
+      context: { terminalFocus: true },
+    }),
+  );
+  assert.isNull(
+    resolveShortcutCommand({ ...input, ctrlKey: false }, DEFAULT_RESOLVED_KEYBINDINGS, {
+      platform: "MacIntel",
+    }),
+  );
+});
+
 describe("terminal word navigation", () => {
   it.each(["Win32", "Linux x86_64"])(
     "leaves Ctrl+Arrow to the terminal encoder on %s",
