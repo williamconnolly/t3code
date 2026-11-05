@@ -45,6 +45,7 @@ import * as WorkspacePaths from "../workspace/WorkspacePaths.ts";
 import { type CliAuthLocationFlags, projectLocationFlags, resolveCliAuthConfig } from "./config.ts";
 
 type ProjectMutationTarget = {
+  readonly hasCustomTitle: boolean;
   readonly id: ProjectId;
   readonly title: string;
   readonly workspaceRoot: string;
@@ -285,6 +286,7 @@ const findActiveProjectTarget = Effect.fn("findActiveProjectTarget")(function* (
     return {
       id: exactIdMatch.id,
       title: exactIdMatch.title,
+      hasCustomTitle: exactIdMatch.hasCustomTitle === true,
       workspaceRoot: exactIdMatch.workspaceRoot,
     } satisfies ProjectMutationTarget;
   }
@@ -316,6 +318,7 @@ const findActiveProjectTarget = Effect.fn("findActiveProjectTarget")(function* (
   return {
     id: resolved.id,
     title: resolved.title,
+    hasCustomTitle: resolved.hasCustomTitle === true,
     workspaceRoot: resolved.workspaceRoot,
   } satisfies ProjectMutationTarget;
 });
@@ -574,7 +577,7 @@ const projectRenameCommand = Command.make("rename", {
           identifier: flags.project,
         });
         const nextTitle = yield* resolveProjectTitle(project.workspaceRoot, flags.title);
-        if (nextTitle === project.title) {
+        if (nextTitle === project.title && project.hasCustomTitle === true) {
           return `Project ${project.id} is already named ${nextTitle}.`;
         }
 
