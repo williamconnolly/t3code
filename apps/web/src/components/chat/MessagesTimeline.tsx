@@ -1,3 +1,4 @@
+import { useClientSettings } from "../../hooks/useSettings";
 import { threadEnvironment } from "../../state/threads";
 import { useAtomCommand } from "../../state/use-atom-command";
 import type { ToolCallDiffTarget } from "../../diffPanelStore";
@@ -148,6 +149,7 @@ function timelineListStateFor(identity: string): {
     workGroupViewState: rememberedPosition?.disclosures?.workGroupState ?? {
       scrollPositions: new Map(),
       expandedEntries: new Set(),
+      entryExpansionOverrides: new Map(),
     },
   };
 }
@@ -404,6 +406,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
   topFadeEnabled = false,
   historyControls,
 }: MessagesTimelineProps) {
+  const traceExpanded = useClientSettings((settings) => settings.chatTraceDetail === "expanded");
   const listIdentityKey = displayThreadKey ?? routeThreadKey;
   // Snapshot restore positions on identity changes; ongoing scroll writes must not move them.
   // Find open at the opening is part of the snapshot: opening find later
@@ -417,6 +420,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
   );
   const [expandedWorkGroupIds, setExpandedWorkGroupIds] = useState<ReadonlySet<string>>(
     () => listState.rememberedPosition?.disclosures?.workGroups ?? new Set(),
+  );
+  const [expansionOverrides, setExpansionOverrides] = useState<ReadonlyMap<string, boolean>>(
+    () => listState.rememberedPosition?.disclosures?.expansionOverrides ?? new Map(),
   );
   const [expandedAttemptIds, setExpandedAttemptIds] = useState<ReadonlySet<RunAttemptId>>(
     () => listState.rememberedPosition?.disclosures?.attempts ?? new Set(),
@@ -433,6 +439,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
     () => new Map(),
   );
   const [fullscreenAppRowId, setFullscreenAppRowId] = useState<string | null>(null);
+  let paintedExpansionOverrides = expansionOverrides;
   let paintedExpandedRunIds = expandedRunIds;
   let paintedExpandedWorkGroupIds = expandedWorkGroupIds;
   let paintedExpandedAttemptIds = expandedAttemptIds;
@@ -456,6 +463,8 @@ const ConversationTimeline = memo(function ConversationTimeline({
     paintedExpandedRunIds = rememberedPosition?.disclosures?.runs ?? new Set();
     paintedExpandedWorkGroupIds = rememberedPosition?.disclosures?.workGroups ?? new Set();
     paintedExpandedAttemptIds = rememberedPosition?.disclosures?.attempts ?? new Set();
+    paintedExpansionOverrides = rememberedPosition?.disclosures?.expansionOverrides ?? new Map();
+    setExpansionOverrides(paintedExpansionOverrides);
     setExpandedRunIds(paintedExpandedRunIds);
     setExpandedWorkGroupIds(paintedExpandedWorkGroupIds);
     setExpandedAttemptIds(paintedExpandedAttemptIds);
@@ -500,9 +509,13 @@ const ConversationTimeline = memo(function ConversationTimeline({
 
   const onToggleTurnFold = (runId: RunId) => {
     suspendEndScrollMaintenanceForDisclosure(`turn-fold:${runId}`);
+    const key = `run:${runId}`;
+    const expanded =
+      paintedExpansionOverrides.get(key) ?? (traceExpanded || paintedExpandedRunIds.has(runId));
+    setExpansionOverrides(new Map(paintedExpansionOverrides).set(key, !expanded));
     setExpandedRunIds((existing) => {
       const next = new Set(existing);
-      if (next.has(runId)) {
+      if (expanded) {
         next.delete(runId);
       } else {
         next.add(runId);
@@ -512,9 +525,14 @@ const ConversationTimeline = memo(function ConversationTimeline({
   };
   const onToggleWorkGroup = (groupId: string, anchorKey: string) => {
     suspendEndScrollMaintenanceForDisclosure(anchorKey);
+    const key = `group:${groupId}`;
+    const expanded =
+      paintedExpansionOverrides.get(key) ??
+      (traceExpanded || paintedExpandedWorkGroupIds.has(groupId));
+    setExpansionOverrides(new Map(paintedExpansionOverrides).set(key, !expanded));
     setExpandedWorkGroupIds((existing) => {
       const next = new Set(existing);
-      if (next.has(groupId)) {
+      if (expanded) {
         next.delete(groupId);
       } else {
         next.add(groupId);
@@ -670,7 +688,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
     runningRunId,
     expandedRunIds: visibleExpandedRunIds,
     expandedAttemptIds: visibleExpandedAttemptIds,
-    expandedWorkGroupIds,
+    expandedWorkGroupIds: paintedExpandedWorkGroupIds,
+    traceExpanded,
+    expansionOverrides: activeFindRunId
+      ? new Map(paintedExpansionOverrides).set(`run:${activeFindRunId}`, true)
+      : paintedExpansionOverrides,
     isWorking,
     runlessWorkActive,
     activeTurnStartedAt,
@@ -912,6 +934,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
           scrollOffset: element.scrollTop,
           atEnd: isAtEnd,
           disclosures: {
+            expansionOverrides: paintedExpansionOverrides,
             runs: paintedExpandedRunIds,
             workGroups: paintedExpandedWorkGroupIds,
             attempts: paintedExpandedAttemptIds,
@@ -1014,6 +1037,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
     citationRequest: readyCitationRequest,
     listRef,
     timestampFormat,
+    traceExpanded,
     routeThreadKey,
     threadRef: citationThreadRef,
     markdownCwd,
