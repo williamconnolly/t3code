@@ -171,6 +171,7 @@ export const make = Effect.gen(function* () {
   ): Project => ({
     id: row.projectId,
     title: row.title,
+    hasCustomTitle: row.hasCustomTitle,
     workspaceRoot: row.workspaceRoot,
     repositoryIdentity: enrichment?.repositoryIdentity ?? null,
     faviconPath: row.faviconPath ?? enrichment?.faviconPath ?? null,
