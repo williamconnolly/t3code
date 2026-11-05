@@ -40,6 +40,18 @@ const encodeServerSettings = Schema.encodeSync(ServerSettings);
 const encodeServerSettingsPatch = Schema.encodeSync(ServerSettingsPatch);
 const decodeClaudeSettings = Schema.decodeUnknownSync(ClaudeSettings);
 
+describe("chat trace detail", () => {
+  it("preserves compact defaults in stored settings and round-trips the expanded preference", () => {
+    expect(decodeClientSettings({}).chatTraceDetail).toBe("compact");
+    const patch = decodeClientSettingsPatch({ chatTraceDetail: "expanded" });
+    const stored = encodeClientSettings(decodeClientSettings(patch));
+    expect(decodeClientSettings(stored).chatTraceDetail).toBe("expanded");
+    expect(decodeClientSettingsPatch({ chatTraceDetail: "compact" })).toEqual({
+      chatTraceDetail: "compact",
+    });
+  });
+});
+
 describe("storage cleanup settings", () => {
   it("keeps cleanup disabled for existing installations", () => {
     expect(decodeServerSettings({}).worktreeCleanup).toBeNull();

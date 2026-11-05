@@ -29,6 +29,15 @@ The controls retreat as the composer docks after you send the first message.
 Turn on **Composer context** to keep those controls visible after the thread starts. This preference
 applies to the web and desktop clients.
 
+## Chat trace detail
+
+On web and desktop, choose **Chat trace detail → Expanded** in **Settings → Appearance** to
+open activity folds, command/tool groups, and their available details automatically, including
+in existing threads. **Compact** keeps the usual collapsed defaults. Manual open and closed
+choices take precedence while you browse threads; reloading resets those choices. The preference
+is saved on this device or browser and applies to local and remote conversations. It shows only
+detail the provider has supplied and does not change the provider's reasoning effort.
+
 ## Math
 
 Turn on **Render math** in **Settings → Appearance** to typeset LaTeX in messages and Markdown

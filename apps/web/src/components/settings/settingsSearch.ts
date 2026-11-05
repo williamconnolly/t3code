@@ -330,6 +330,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["red green blue orange additions deletions changes counts palette colorblind"],
   },
   {
+    id: "chat-trace-detail",
+    title: "Chat trace detail",
+    to: "/settings/appearance",
+    searchTerms: [
+      "activity tools commands groups expand collapse verbose trace reasoning worked compact output",
+    ],
+  },
+  {
     id: "chat-width",
     title: "Chat width",
     to: "/settings/appearance",

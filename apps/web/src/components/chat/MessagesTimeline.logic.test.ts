@@ -25,6 +25,7 @@ import { EnvironmentId, MessageId, RunId } from "@t3tools/contracts";
 import { serializeAssistantCitation } from "@t3tools/shared/assistantCitations";
 import {
   computeStableMessagesTimelineRows,
+  sameRowsInput,
   deriveMessagesTimelineRows,
   timelineTurnFoldRunIdsByEntryId,
   deriveMessagesTimelineRowsWithState,
@@ -241,6 +242,25 @@ describe("deriveMessagesTimelineRows", () => {
       expect(rows.some((row) => row.kind === "event")).toBe(false);
       expect(workRows[0]).not.toMatchObject({ expanded: true });
       expect(workRows[0]).not.toMatchObject({ isExpandedToolGroup: true });
+      for (const traceExpanded of [false, true]) {
+        for (const manualChoice of [undefined, false, true]) {
+          const configured = deriveMessagesTimelineRows({
+            timelineEntries: entries,
+            isWorking: status === "waiting",
+            runningRunId: fixture.runId,
+            turnDiffSummaries: [],
+            supportsConversationRollback: false,
+            traceExpanded,
+            expansionOverrides:
+              manualChoice === undefined
+                ? new Map()
+                : new Map([[`group:${workRows[0]!.groupId}`, manualChoice]]),
+          });
+          expect(configured.some((row) => row.kind === "work" && row.isExpandedToolGroup)).toBe(
+            manualChoice ?? traceExpanded,
+          );
+        }
+      }
       const pendingRows = deriveMessagesTimelineRows({
         timelineEntries: entries,
         pendingApprovalRequestIds: new Set([RuntimeRequestId.make("approval-request")]),
@@ -982,6 +1002,26 @@ describe("deriveMessagesTimelineRows", () => {
       "turn-fold:turn-1",
       "assistant-final-entry",
     ]);
+
+    for (const traceExpanded of [false, true]) {
+      for (const manualChoice of [undefined, false, true]) {
+        const configured = deriveMessagesTimelineRows({
+          timelineEntries,
+          isWorking: false,
+          turnDiffSummaries: [],
+          supportsConversationRollback: false,
+          traceExpanded,
+          expansionOverrides:
+            manualChoice === undefined ? new Map() : new Map([["run:turn-1", manualChoice]]),
+        });
+        expect(configured.some((row) => row.id === "work-entry-1")).toBe(
+          manualChoice ?? traceExpanded,
+        );
+        expect(configured.find((row) => row.kind === "turn-fold")).toMatchObject({
+          expanded: manualChoice ?? traceExpanded,
+        });
+      }
+    }
 
     const expandedRows = deriveMessagesTimelineRows({
       timelineEntries,
@@ -3223,6 +3263,8 @@ describe("streaming v2 row projection", () => {
       ...initial.input,
       availableRevertTurnCounts: new Set([0]),
       pendingApprovalRequestIds: new Set<RuntimeRequestId>(),
+      traceExpanded: true,
+      expansionOverrides: new Map([["group:manual", false]]),
     });
     Object.freeze(previous.rows);
     for (const row of previous.rows) Object.freeze(row);
@@ -3241,7 +3283,21 @@ describe("streaming v2 row projection", () => {
       turnDiffSummaries: initial.input.turnDiffSummaries.map((summary) => ({ ...summary })),
       availableRevertTurnCounts: new Set([0]),
       pendingApprovalRequestIds: new Set<RuntimeRequestId>(),
+      traceExpanded: true,
+      expansionOverrides: new Map([["group:manual", false]]),
     };
+    expect(
+      sameRowsInput(previous.input, {
+        ...previous.input,
+        expansionOverrides: new Map(previous.input.expansionOverrides),
+      }),
+    ).toBe(true);
+    expect(
+      sameRowsInput(previous.input, {
+        ...previous.input,
+        expansionOverrides: new Map([["group:manual", true]]),
+      }),
+    ).toBe(false);
     const next = deriveMessagesTimelineRowsWithState(input, previous);
     expect(next.rows).toEqual(
       deriveMessagesTimelineRows({

@@ -289,6 +289,41 @@ export function AppearanceSettingsPanel() {
             </div>
           }
         />
+        <SettingsRow
+          {...searchableSetting("chat-trace-detail")}
+          description="Expand activity groups and available details automatically. Manual open and closed choices are kept while you browse threads."
+          resetAction={
+            settings.chatTraceDetail !== DEFAULT_UNIFIED_SETTINGS.chatTraceDetail ? (
+              <SettingResetButton
+                label="chat trace detail"
+                onClick={() =>
+                  updateSettings({ chatTraceDetail: DEFAULT_UNIFIED_SETTINGS.chatTraceDetail })
+                }
+              />
+            ) : null
+          }
+          control={
+            <div className="w-full sm:w-40">
+              <Select
+                value={settings.chatTraceDetail}
+                onValueChange={(value) => {
+                  if (value === "compact" || value === "expanded")
+                    updateSettings({ chatTraceDetail: value });
+                }}
+              >
+                <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Chat trace detail">
+                  <SelectValue>
+                    {settings.chatTraceDetail === "expanded" ? "Expanded" : "Compact"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectPopup align="end" alignItemWithTrigger={false}>
+                  <SelectItem value="compact">Compact (default)</SelectItem>
+                  <SelectItem value="expanded">Expanded</SelectItem>
+                </SelectPopup>
+              </Select>
+            </div>
+          }
+        />
         <ThreadDetailsItemsRow />
         <SettingsRow
           {...searchableSetting("effort-display")}

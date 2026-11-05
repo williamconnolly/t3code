@@ -24,7 +24,8 @@ import {
   turnItemNeedsDetailFetch,
 } from "@t3tools/client-runtime/work-log/item-detail";
 import { claudeSkillInvocation } from "@t3tools/shared/toolActivity";
-import { memo, use, useState, type KeyboardEvent } from "react";
+import { memo, use, type KeyboardEvent } from "react";
+import { useTraceDisclosure } from "./useTraceDisclosure";
 import {
   workEntryDisplayIndicatesToolFailure,
   workEntrySignalsSevereFailure,
@@ -186,19 +187,18 @@ function WorkEntryLogRow(props: WorkEntryRowProps) {
       ? notificationChildThreadId(workEntry.projectedItem.item.source)
       : undefined;
   const groupView = use(WorkGroupViewCtx);
-  const [expanded, setExpanded] = useState(
-    () => groupView?.state.expandedEntries.has(workEntry.id) ?? false,
+  const { expanded, setExpanded } = useTraceDisclosure(
+    workEntry.id,
+    ctx.workGroupViewState.entryExpansionOverrides,
+    ctx.traceExpanded || ctx.workGroupViewState.expandedEntries.has(workEntry.id),
   );
   const toggleExpanded = () => {
     const next = !expanded;
-    if (groupView) {
-      groupView.onToggleEntry(!next);
-      if (next) groupView.state.expandedEntries.add(workEntry.id);
-      else groupView.state.expandedEntries.delete(workEntry.id);
-    } else {
-      props.onToggleEntry?.(!next);
-    }
     setExpanded(next);
+    if (next) ctx.workGroupViewState.expandedEntries.add(workEntry.id);
+    else ctx.workGroupViewState.expandedEntries.delete(workEntry.id);
+    if (groupView) groupView.onToggleEntry(!next);
+    else props.onToggleEntry?.(!next);
   };
   const failureItem = workEntry.projectedItem?.item;
   const pendingApproval =
